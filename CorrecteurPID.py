@@ -10,6 +10,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 
 def pid(x, Kp, Ki, Kd) :
     """
@@ -66,6 +67,7 @@ def Transfere(x) :
             G0 = gain de vitesse
             tau et n = paramètres
     """
+#    return G0*np.exp(-n*x)/x
     return G0/(x*(1+tau*x)**n)
 
 def Linear(p1, p2) :
@@ -100,52 +102,90 @@ def AddToListFromList(l1, l2) :
     return np.append(np.array(l1), np.array(l2))
 
 if __name__ == '__main__' :
-    G0 = 1
-    tau = 1/1000
-    n = 2
     
-    # Pas de calcul de la simulation
-    pas = 1
+    # Load les données du fours
+    temperature = np.loadtxt("temp_32101.txt", delimiter="\t")
+    consigne = np.loadtxt("tempTarget_32101.txt", delimiter="\t")
     
-    # Couple de point de température désirée (temps en minute)
-    target = [(0, 22),
-               (45, 150),
-               (100, 150)]
-    # Calul de la fonction de consigne
-    consigne = []
-    consigne = AddToListFromList(consigne, CalculFonction(pas, target[0], target[1]))
-    consigne = AddToListFromList(consigne, CalculFonction(pas, target[1], target[2]))
-    temps = np.arange(target[0][0], target[2][0] + 2)
+    temps = temperature[:,0]
+    temperature = temperature[:,1]
+    consigne = consigne[:,1]
     
-    # Température en fonction du temps
-    y = [float(target[0][1]) - 2]
-    # Erreur en fonction du temps
-    erreur = []
-    # Évolution de la consigne
-    for i in range(0, len(consigne)) :
-        erreur.append(consigne[i] - y[-1])
-        y.append(Correcteur(consigne[i], y[-1], Transfere, 1, 0, 0))
+    temps = temps[:1847]
+    consigne = consigne[:1847]
+    temperature = temperature[:1847]
     
+    # Affiche la température
+    plt.plot(temps, temperature, 'ko-')
     
-    y = np.array(y)
-    erreur = np.array(y)
+    G0 = 100
+    tau = 100
+    n = 11000000
+    l = str(G0) + ' ' + str(tau) + ' ' + str(n)
+    plt.plot(temps, Correcteur(consigne, temperature, Transfere, 26, 73, 18), 'b--', label=l)
     
-    # Graphique de la simulation
-    #temps /= 60     # Pour l'avoir en minute    
-    # Affichage de la consigne
-    plt.figure()
-    plt.title('Simulation de la correction PID')
-    plt.plot(temps[:2], consigne[:2], 'b-', label='consigne')
-    plt.plot(temps[:2], y[:2], 'k--', label='Temperature')
-    plt.xlabel('temps (minutes)')
-    plt.ylabel('température (celsius)')
+#    G0 = 500
+    tau = 100
+    n = 10
+    l = str(G0) + ' ' + str(tau) + ' ' + str(n)
+    plt.plot(temps, Correcteur(consigne, temperature, Transfere, 26, 73, 18), 'r--', label=l)
+    
+#    G0 = 500
+    tau = 100
+    n = 100
+    l = str(G0) + ' ' + str(tau) + ' ' + str(n)
+    plt.plot(temps, Correcteur(consigne, temperature, Transfere, 26, 73, 18), 'g--', label=l)
+    
+#    G0 = 500
+    tau = 10
+    n = 10
+    l = str(G0) + ' ' + str(tau) + ' ' + str(n)
+    plt.plot(temps, Correcteur(consigne, temperature, Transfere, 26, 73, 18), 'm--', label=l)
+    
     plt.legend(loc='best')
-    
-    # Affichage de l'erreur
-    plt.figure()
-    plt.title('Simulation erreur de la correction PID')
-    plt.plot(temps[:2], erreur[:2], 'b-')
-    plt.xlabel('temps (minutes)')
-    plt.ylabel('température (celsius)')
-    
-    plt.show()
+#    
+#    # Pas de calcul de la simulation
+#    pas = 1
+#    
+#    # Couple de point de température désirée (temps en minute)
+#    target = [(0, 22),
+#               (45, 150),
+#               (100, 150)]
+#    # Calul de la fonction de consigne
+#    consigne = []
+#    consigne = AddToListFromList(consigne, CalculFonction(pas, target[0], target[1]))
+#    consigne = AddToListFromList(consigne, CalculFonction(pas, target[1], target[2]))
+#    temps = np.arange(target[0][0], target[2][0] + 2)
+#    
+#    # Température en fonction du temps
+#    y = [float(target[0][1]) - 2]
+#    # Erreur en fonction du temps
+#    erreur = []
+#    # Évolution de la consigne
+#    for i in range(0, len(consigne)) :
+#        erreur.append(consigne[i] - y[-1])
+#        y.append(Correcteur(consigne[i], y[-1], Transfere, 1, 0, 0))
+#    
+#    
+#    y = np.array(y)
+#    erreur = np.array(y)
+#    
+#    # Graphique de la simulation
+#    #temps /= 60     # Pour l'avoir en minute    
+#    # Affichage de la consigne
+#    plt.figure()
+#    plt.title('Simulation de la correction PID')
+#    plt.plot(temps[:2], consigne[:2], 'b-', label='consigne')
+#    plt.plot(temps[:2], y[:2], 'k--', label='Temperature')
+#    plt.xlabel('temps (minutes)')
+#    plt.ylabel('température (celsius)')
+#    plt.legend(loc='best')
+#    
+#    # Affichage de l'erreur
+#    plt.figure()
+#    plt.title('Simulation erreur de la correction PID')
+#    plt.plot(temps[:2], erreur[:2], 'b-')
+#    plt.xlabel('temps (minutes)')
+#    plt.ylabel('température (celsius)')
+#    
+#    plt.show()
